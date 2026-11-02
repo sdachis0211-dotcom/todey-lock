@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TODAY LOCK</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	padding: 24px 16px 50px;
+	font-family: Arial, "Noto Sans JP", sans-serif;
+	background: linear-gradient(135deg, #fff0f5, #eef4ff, #f1fff5);
+	color: #45445a;
+}
+
+.container {
+	max-width: 540px;
+	margin: auto;
+}
+
+header {
+	text-align: center;
+	padding: 22px 10px;
+}
+
+h1 {
+	margin: 0;
+	color: #8c79c6;
+	font-size: 34px;
+	letter-spacing: 3px;
+}
+
+.subtitle {
+	color: #9992ad;
+	margin-top: 8px;
+}
+
+.date {
+	margin-top: 12px;
+	font-size: 14px;
+	color: #89849e;
+}
+
+.card {
+	background: rgba(255,255,255,.9);
+	border-radius: 22px;
+	padding: 22px;
+	margin-bottom: 18px;
+	box-shadow: 0 5px 20px rgba(100,90,150,.08);
+}
+
+h2 {
+	font-size: 18px;
+	margin: 0 0 16px;
+}
+
+.input-area {
+	display: flex;
+	gap: 8px;
+}
+
+input[type="text"] {
+	flex: 1;
+	min-width: 0;
+	padding: 13px;
+	border: 2px solid #e8e1f6;
+	border-radius: 12px;
+	font-size: 15px;
+	outline: none;
+}
+
+button {
+	border: none;
+	border-radius: 12px;
+	padding: 12px 17px;
+	background: #b7a6e8;
+	color: white;
+	font-size: 14px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+button:active { transform: scale(.97); }
+
+.progress-bg {
+	height: 12px;
+	background: #eeeaf6;
+	border-radius: 20px;
+	overflow: hidden;
+	margin-top: 12px;
+}
+
+.progress-bar {
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(90deg,#b6a2e8,#91d9c0);
+	transition: width .25s;
+}
+
+.progress-text {
+	color: #928ba5;
+	font-size: 13px;
+	margin-top: 9px;
+}
+
+.task {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 13px 0;
+	border-bottom: 1px solid #f0edf5;
+}
+
+.task:last-child { border-bottom: none; }
+
+.task input {
+	width: 19px;
+	height: 19px;
+	accent-color: #a994df;
+}
+
+.task-name {
+	flex: 1;
+	overflow-wrap: anywhere;
+}
+
+.task.completed .task-name {
+	text-decoration: line-through;
+	color: #aaa5b5;
+}
+
+.delete {
+	padding: 7px 10px;
+	background: #f5dce5;
+	color: #a76d83;
+	font-size: 12px;
+}
+
+.empty {
+	text-align: center;
+	color: #aaa4b7;
+	padding: 20px 0;
+	font-size: 14px;
+}
+
+.categories {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.category {
+	background: #faf8ff;
+	border: 2px solid #eee9f8;
+	border-radius: 13px;
+	padding: 13px 8px;
+	text-align: center;
+	font-size: 14px;
+}
+
+.category input {
+	accent-color: #a994df;
+	margin-right: 5px;
+}
+
+.status {
+	text-align: center;
+	padding: 18px 10px;
+	border-radius: 15px;
+	background: #fff5e9;
+	color: #a47d50;
+	font-weight: bold;
+}
+
+.status.done {
+	background: #eafff3;
+	color: #529b7a;
+}
+
+.note {
+	font-size: 12px;
+	color: #aaa4b7;
+	line-height: 1.7;
+	margin-top: 15px;
+}
+
+@media(max-width: 380px) {
+	.input-area { flex-direction: column; }
+	.input-area button { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+	<h1>✦ TODAY LOCK ✦</h1>
+	<div class="subtitle">今日の自分との約束を守ろう</div>
+	<div class="date" id="todayDate"></div>
+</header>
+
+<div class="card">
+	<h2>🌷 今日の達成率</h2>
+	<div id="progressNumber">0%</div>
+	<div class="progress-bg">
+		<div class="progress-bar" id="progressBar"></div>
+	</div>
+	<div class="progress-text" id="progressText">0 / 0 タスク完了</div>
+</div>
+
+<div class="card">
+	<h2>📝 今日やること</h2>
+	<div class="input-area">
+		<input id="taskInput" type="text" placeholder="例：英語を30分勉強する">
+		<button id="addButton">＋ 追加</button>
+	</div>
+	<div id="taskList"></div>
+</div>
+
+<div class="card">
+	<h2>🔐 制限したいアプリ</h2>
+	<div class="categories">
+		<label class="category"><input type="checkbox" value="SNS">SNS</label>
+		<label class="category"><input type="checkbox" value="ゲーム">ゲーム</label>
+		<label class="category"><input type="checkbox" value="動画">動画</label>
+		<label class="category"><input type="checkbox" value="その他">その他</label>
+	</div>
+	<div class="note">
+		選択した項目は保存されるよ。現在は設定の記録のみで、iPhoneの他のアプリを実際に制限する機能ではありません。
+	</div>
+</div>
+
+<div class="card">
+	<h2>💗 TODAY LOCKの状態</h2>
+	<div class="status" id="status">
+		まずは今日のタスクを登録しよう！
+	</div>
+</div>
+
+</div>
+
+<script>
+const STORAGE_KEY = "todayLockData";
+const SETTINGS_KEY = "todayLockSettings";
+
+const today = new Date();
+const dateKey =
+	today.getFullYear() + "-" +
+	String(today.getMonth()+1).padStart(2,"0") + "-" +
+	String(today.getDate()).padStart(2,"0");
+
+document.getElementById("todayDate").textContent =
+	today.getFullYear() + "年" +
+	(today.getMonth()+1) + "月" +
+	today.getDate() + "日";
+
+let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+
+// 今日の日付のデータがなければ、新しいタスクリストを作る
+let tasks = savedData.date === dateKey ? savedData.tasks : [];
+
+function saveTasks() {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify({
+		date: dateKey,
+		tasks: tasks
+	}));
+}
+
+function render() {
+	const list = document.getElementById("taskList");
+	list.innerHTML = "";
+
+	if (tasks.length === 0) {
+		list.innerHTML = '<div class="empty">今日のタスクを追加してね 🌼</div>';
+	}
+
+	tasks.forEach((task, index) => {
+		const item = document.createElement("div");
+		item.className = "task" + (task.done ? " completed" : "");
+
+		const checkbox = document.createElement("input");
+		checkbox.type = "checkbox";
+		checkbox.checked = task.done;
+		checkbox.addEventListener("change", () => {
+			tasks[index].done = checkbox.checked;
+			saveTasks();
+			render();
+		});
+
+		const name = document.createElement("span");
+		name.className = "task-name";
+		name.textContent = task.name;
+
+		const deleteButton = document.createElement("button");
+		deleteButton.className = "delete";
+		deleteButton.textContent = "削除";
+		deleteButton.addEventListener("click", () => {
+			tasks.splice(index, 1);
+			saveTasks();
+			render();
+		});
+
+		item.append(checkbox, name, deleteButton);
+		list.appendChild(item);
+	});
+
+	const completed = tasks.filter(task => task.done).length;
+	const percent = tasks.length === 0 ? 0 :
+		Math.round(completed / tasks.length * 100);
+
+	document.getElementById("progressNumber").textContent = percent + "%";
+	document.getElementById("progressBar").style.width = percent + "%";
+	document.getElementById("progressText").textContent =
+		completed + " / " + tasks.length + " タスク完了";
+
+	const status = document.getElementById("status");
+
+	if (tasks.length > 0 && completed === tasks.length) {
+		status.textContent = "🎉 全タスク達成！今日もよく頑張ったね！";
+		status.className = "status done";
+	} else if (tasks.length > 0) {
+		status.textContent = "🌱 あと " + (tasks.length-completed) +
+			" 個！最後まで頑張ろう！";
+		status.className = "status";
+	} else {
+		status.textContent = "まずは今日のタスクを登録しよう！";
+		status.className = "status";
+	}
+}
+
+function addTask() {
+	const input = document.getElementById("taskInput");
+	const name = input.value.trim();
+
+	if (!name) {
+		alert("タスクを入力してね！");
+		return;
+	}
+
+	tasks.push({name: name, done: false});
+	input.value = "";
+	saveTasks();
+	render();
+	input.focus();
+}
+
+document.getElementById("addButton").addEventListener("click", addTask);
+
+document.getElementById("taskInput").addEventListener("keydown", event => {
+	if (event.key === "Enter") addTask();
+});
+
+// 制限したいアプリの選択内容を保存
+const savedSettings = JSON.parse(
+	localStorage.getItem(SETTINGS_KEY) || "[]"
+);
+
+document.querySelectorAll(".category input").forEach(input => {
+	input.checked = savedSettings.includes(input.value);
+
+	input.addEventListener("change", () => {
+		const selected = [...document.querySelectorAll(".category input:checked")]
+			.map(item => item.value);
+
+		localStorage.setItem(SETTINGS_KEY, JSON.stringify(selected));
+	});
+});
+
+saveTasks();
+render();
+</script>
+</body>
+</html>
